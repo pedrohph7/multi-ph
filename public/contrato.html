@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assinatura de contrato</title>
+<style>
+  :root {
+    --fundo: #0B1220;
+    --card: #111C31;
+    --linha: #1F2C45;
+    --titulo: #F3F7FA;
+    --texto: #A9BAC9;
+    --roxo: #8B5CF6;
+    --teal: #2DD4C6;
+    --verde: #34D399;
+    --vermelho: #FF6259;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    padding: 30px 16px;
+  }
+  main { max-width: 760px; margin: 0 auto; }
+  .cartao {
+    background: var(--card);
+    border: 1px solid var(--linha);
+    border-radius: 18px;
+    padding: 26px;
+  }
+  h1 { color: var(--titulo); font-size: 22px; font-weight: 800; }
+  h2 { color: var(--titulo); font-size: 16px; margin: 20px 0 8px; }
+  .info { font-size: 13px; margin-top: 6px; }
+  .info b { color: var(--titulo); }
+  .corpo {
+    background: #0D1728;
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+    padding: 18px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    margin: 14px 0;
+    white-space: pre-wrap;
+  }
+  .campo { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .campo label { font-size: 12px; font-weight: 700; }
+  input {
+    background: #0D1728;
+    color: var(--titulo);
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 11px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+  }
+  input:focus { border-color: var(--roxo); }
+  button {
+    background: var(--roxo);
+    border: none;
+    color: var(--titulo);
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    width: 100%;
+  }
+  button:disabled { opacity: .5; cursor: wait; }
+  .assinado {
+    background: rgba(52, 211, 153, .1);
+    border: 1px solid var(--verde);
+    border-radius: 12px;
+    padding: 16px;
+    color: var(--verde);
+    font-weight: 700;
+    text-align: center;
+    font-size: 14px;
+  }
+  .erro { color: var(--vermelho); font-size: 13px; margin-top: 10px; }
+  .aviso { color: var(--teal); font-size: 12px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="cartao" id="conteudo">Carregando contrato...</div>
+</main>
+<script>
+const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+async function api(url, opcoes) {
+  const r = await fetch(url, opcoes);
+  return r.json();
+}
+
+const id = new URLSearchParams(location.search).get("id");
+
+async function carregar() {
+  if (!id) { document.getElementById("conteudo").innerHTML = '<div class="erro">Link inválido. Use o link de assinatura enviado pela empresa.</div>'; return; }
+  const j = await api("/api/contratos/" + id);
+  if (j.erro || !j.contrato) { document.getElementById("conteudo").innerHTML = '<div class="erro">Contrato não encontrado.</div>'; return; }
+  const c = j.contrato;
+  const lead = j.lead;
+  const nome = (lead && lead.nome) ? lead.nome : "";
+  const corpo = c.corpo.replace(/\{nome\}/g, nome);
+
+  if (c.status === "assinado") {
+    document.getElementById("conteudo").innerHTML = `
+      <div class="assinado">Este contrato já foi assinado em ${esc(c.assinado)} por ${esc(c.assinante ? c.assinante.nome : "o cliente")}.</div>`;
+    return;
+  }
+
+  document.getElementById("conteudo").innerHTML = `
+    <h1>${esc(c.titulo)}</h1>
+    <div class="info">Contrato para: <b>${esc(nome || "—")}</b></div>
+    ${c.valor !== null ? `<div class="info">Valor: <b>R$ ${Number(c.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b></div>` : ""}
+    <h2>Termo do contrato</h2>
+    <div class="corpo">${esc(corpo)}</div>
+    <h2>Assinatura</h2>
+    <div class="campo"><label>Nome completo do contratante</label><input id="sigNome" placeholder="${esc(nome)}"></div>
+    <div class="campo"><label>CPF</label><input id="sigCpf" placeholder="000.000.000-00"></div>
+    <button id="btnAssinar">Assinar contrato</button>
+    <div id="msg"></div>`;
+
+  document.getElementById("btnAssinar").addEventListener("click", async () => {
+    const btn = document.getElementById("btnAssinar");
+    btn.disabled = true;
+    const msg = document.getElementById("msg");
+    msg.innerHTML = '<div class="aviso">Registrando assinatura...</div>';
+    const r = await api("/api/contratos/" + id + "/assinar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: document.getElementById("sigNome").value,
+        cpf: document.getElementById("sigCpf").value
+      })
+    });
+    if (r.erro) { msg.innerHTML = '<div class="erro">' + esc(r.erro) + '</div>'; btn.disabled = false; return; }
+    document.getElementById("conteudo").innerHTML = `
+      <div class="assinado">Contrato assinado com sucesso em ${esc(r.contrato.assinado)}.<br>
+      Obrigado, ${esc(r.contrato.assinante.nome)}! A empresa já recebeu a confirmação.</div>`;
+  });
+}
+
+carregar();
+</script>
+</body>
+</html>
