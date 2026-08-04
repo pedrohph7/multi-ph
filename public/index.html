@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Multi-IA</title>
+<style>
+  :root {
+    --fundo: #0B1220;
+    --card: #111C31;
+    --linha: #1F2C45;
+    --titulo: #F3F7FA;
+    --texto: #A9BAC9;
+    --roxo: #8B5CF6;
+    --teal: #2DD4C6;
+    --dourado: #E8A94A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    padding: 28px 24px 16px;
+    text-align: center;
+  }
+  header h1 {
+    color: var(--titulo);
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+  header h1 span { color: var(--roxo); }
+  header p { margin-top: 6px; font-size: 14px; }
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 8px 20px 60px;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+  }
+  .coluna-principal { min-width: 0; }
+  .lateral { min-width: 0; }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+  }
+  .caixa-pergunta {
+    background: var(--card);
+    border: 1px solid var(--linha);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .diario {
+    background: var(--card);
+    border: 1px solid var(--linha);
+    border-radius: 14px;
+    padding: 18px;
+    position: sticky;
+    top: 16px;
+  }
+  .diario .topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .diario h2 { color: var(--teal); font-size: 18px; font-weight: 800; }
+  .diario .data { font-size: 13px; color: var(--texto); font-family: "JetBrains Mono", Consolas, monospace; }
+  .diario .economia { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .diario .economia .pct {
+    background: #0D1728;
+    border: 1px solid var(--linha);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .diario .economia .pct b { color: var(--titulo); }
+  .diario .resumo {
+    background: linear-gradient(135deg, #141C31, #1A2240);
+    border: 1px solid var(--dourado);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--titulo);
+    white-space: pre-wrap;
+  }
+  .diario .noticias { margin-top: 12px; }
+  .diario .noticias h3 { font-size: 13px; color: var(--texto); margin-bottom: 6px; font-weight: 600; }
+  .diario .noticias ol { margin-left: 18px; font-size: 13px; line-height: 1.6; }
+  .diario .historico { margin-top: 10px; }
+  .diario .historico select {
+    background: #0D1728; color: var(--titulo); border: 1px solid var(--linha);
+    border-radius: 8px; padding: 7px 10px; font-size: 13px; font-family: inherit;
+  }
+  .diario .respostas-ias { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .diario .resposta-ia {
+    background: #0D1728;
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .diario .resposta-ia b { color: var(--teal); font-size: 12.5px; display: block; margin-bottom: 6px; }
+  .diario .resposta-ia .texto {
+    color: var(--titulo);
+    font-size: 12.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  textarea {
+    width: 100%;
+    min-height: 110px;
+    background: #0D1728;
+    color: var(--titulo);
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+  }
+  textarea:focus { border-color: var(--roxo); }
+  .botoes {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  button {
+    background: var(--roxo);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .15s;
+  }
+  button:hover { opacity: .85; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.secundario {
+    background: transparent;
+    border: 1px solid var(--dourado);
+    color: var(--dourado);
+  }
+  label.opcao {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .status { margin-top: 14px; font-size: 14px; min-height: 20px; }
+  .status .carregando { color: var(--teal); }
+  .status .erro { color: #FF6259; }
+  #resumo {
+    background: linear-gradient(135deg, #141C31, #1A2240);
+    border: 1px solid var(--dourado);
+    border-radius: 14px;
+    padding: 18px;
+    margin-top: 22px;
+    display: none;
+  }
+  #resumo h2 { color: var(--dourado); font-size: 17px; margin-bottom: 10px; }
+  #resumo p { color: var(--titulo); line-height: 1.6; white-space: pre-wrap; }
+  #grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 22px;
+  }
+  .card-resposta {
+    background: var(--card);
+    border: 1px solid var(--linha);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: aparecer .3s forwards;
+  }
+  @keyframes aparecer { to { opacity: 1; transform: none; } }
+  .card-resposta .topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--linha);
+  }
+  .card-resposta .ponto { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+  .card-resposta .nome { color: var(--titulo); font-weight: 700; font-size: 14px; }
+  .card-resposta .modelo { font-size: 11px; color: var(--texto); font-family: "JetBrains Mono", Consolas, monospace; }
+  .card-resposta .corpo {
+    flex: 1;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    max-height: 380px;
+  }
+  .card-resposta .corpo.pulso { color: var(--teal); animation: piscar 1s infinite; }
+  @keyframes piscar { 50% { opacity: .35; } }
+  .card-resposta .erro-texto { color: #FF6259; font-size: 13.5px; }
+  .card-resposta .acoes { margin-top: 10px; display: flex; gap: 8px; }
+  .card-resposta .acoes button {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--linha);
+    color: var(--texto);
+  }
+  .card-resposta.recomendada { border-color: var(--dourado); box-shadow: 0 0 0 1px var(--dourado); }
+  .card-resposta .selo {
+    display: inline-block;
+    background: var(--dourado);
+    color: #0B1220;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .maestro {
+    margin-top: 22px;
+    background: var(--card);
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    display: none;
+  }
+  .maestro b { color: var(--teal); }
+  .maestro .selo-maestro {
+    background: var(--dourado);
+    color: #0B1220;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    color: #5C6B7F;
+  }
+  .botao-flutuante {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 62px;
+    height: 62px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--roxo), #6D3FE8);
+    border: none;
+    color: #fff;
+    font-size: 26px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(139, 92, 246, .45);
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .15s;
+  }
+  .botao-flutuante:hover { transform: scale(1.06); }
+  .painel-abas {
+    position: fixed;
+    right: 22px;
+    bottom: 96px;
+    width: 400px;
+    max-width: calc(100vw - 44px);
+    max-height: 78vh;
+    background: #0E1830;
+    border: 1px solid var(--linha);
+    border-radius: 16px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
+    z-index: 70;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .painel-abas.visivel { display: flex; }
+  .painel-abas .abas {
+    display: flex;
+    border-bottom: 1px solid var(--linha);
+    background: #0B1220;
+  }
+  .painel-abas .abas button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--texto);
+    padding: 12px 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-family: inherit;
+  }
+  .painel-abas .abas button.ativa {
+    color: var(--titulo);
+    border-bottom-color: var(--roxo);
+  }
+  .painel-abas .conteudo-aba {
+    overflow-y: auto;
+    padding: 14px;
+    flex: 1;
+  }
+  .mini-babel .babel-cab {
+    padding: 10px 12px;
+    border: 1px solid var(--linha);
+    border-left: 3px solid var(--dourado);
+    border-radius: 10px;
+    background: #0B1220;
+  }
+  .babel-grade {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .babel-card {
+    background: #0B1220;
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 9px 10px;
+  }
+  .babel-card .babel-t {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--titulo);
+    margin-bottom: 3px;
+  }
+  .babel-card .babel-d {
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--texto);
+  }
+  .visualizador-slides { position: relative; }
+  .visualizador-slides img {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--linha);
+    display: block;
+  }
+  .visualizador-slides .controles {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 10px;
+  }
+  .visualizador-slides .controles button {
+    background: transparent;
+    border: 1px solid var(--linha);
+    color: var(--titulo);
+    width: 36px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .visualizador-slides .controles span {
+    font-size: 12.5px;
+    color: var(--texto);
+    font-family: "JetBrains Mono", Consolas, monospace;
+  }
+  .mini-chat textarea {
+    width: 100%;
+    min-height: 70px;
+    background: #0D1728;
+    color: var(--titulo);
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13.5px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+  }
+  .mini-chat button {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    font-size: 13.5px;
+  }
+  .mini-chat .resposta-mini {
+    margin-top: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .mini-chat .resposta-mini .r {
+    background: #0D1728;
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .mini-chat .resposta-mini .r b { display: block; margin-bottom: 4px; color: var(--titulo); font-size: 12px; }
+  .mini-chat .carregando-mini { color: var(--teal); font-size: 12.5px; margin-top: 8px; }
+  .mini-hoje .resumo-mini {
+    background: linear-gradient(135deg, #141C31, #1A2240);
+    border: 1px solid var(--dourado);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--titulo);
+    white-space: pre-wrap;
+  }
+  .mini-hoje .pcts { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .mini-hoje .pcts span {
+    background: #0D1728; border: 1px solid var(--linha); border-radius: 8px;
+    padding: 6px 10px; font-size: 12px;
+  }
+  .mini-hoje .pcts b { color: var(--titulo); }
+  .mini-hoje .n-mini { font-size: 12.5px; color: var(--texto); line-height: 1.5; margin-top: 10px; }
+  .mini-hoje .n-mini h4 { color: var(--texto); font-size: 12px; margin-bottom: 5px; }
+  .mini-hoje ol { margin-left: 16px; }
+  .mini-slides textarea {
+    width: 100%;
+    min-height: 70px;
+    background: #0D1728;
+    color: var(--titulo);
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13.5px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+  }
+  .mini-slides button {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    font-size: 13.5px;
+  }
+  .mini-slides .carregando-mini { color: var(--teal); font-size: 12.5px; margin-top: 8px; }
+  .mini-slides .slide-gerado {
+    margin-top: 12px;
+    background: linear-gradient(135deg, #141C31, #1A2240);
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+  }
+  .mini-slides .slide-gerado .contador-slide {
+    font-size: 11px;
+    color: var(--texto);
+    font-family: "JetBrains Mono", Consolas, monospace;
+    margin-bottom: 8px;
+  }
+  .mini-slides .slide-gerado .titulo-slide {
+    color: var(--titulo);
+    font-size: 18px;
+    font-weight: 800;
+    font-family: "Fraunces", Georgia, serif;
+    margin-bottom: 10px;
+  }
+  .mini-slides .slide-gerado ul { margin-left: 16px; }
+  .mini-slides .slide-gerado li {
+    color: var(--texto);
+    font-size: 13px;
+    line-height: 1.55;
+    margin-bottom: 5px;
+  }
+  .mini-slides .nav-slides {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 10px;
+  }
+  .mini-slides .nav-slides button {
+    width: 36px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--linha);
+    color: var(--titulo);
+    border-radius: 8px;
+    font-size: 14px;
+    margin: 0;
+  }
+  .mini-ceo .ceo-cartoes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .mini-ceo .ceo-cartao {
+    background: #0B1220;
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 9px 10px;
+  }
+  .mini-ceo .ceo-cartao .ceo-t {
+    font-size: 11px;
+    color: var(--texto);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .mini-ceo .ceo-cartao .ceo-d {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--titulo);
+    margin-top: 3px;
+  }
+  .mini-ceo .ceo-cartao .ceo-d.pos { color: #34D399; }
+  .mini-ceo .ceo-cartao .ceo-d.neg { color: #FF6259; }
+  .mini-ceo textarea {
+    width: 100%;
+    min-height: 70px;
+    background: #0D1728;
+    color: var(--titulo);
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13.5px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+  }
+  .mini-ceo .ceo-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    font-size: 13.5px;
+    background: linear-gradient(135deg, var(--dourado), #d99a3d);
+    color: #0B1220;
+  }
+  .mini-ceo .ceo-status { color: var(--teal); font-size: 12.5px; margin-top: 8px; }
+  .mini-ceo .ceo-resposta {
+    margin-top: 12px;
+    background: linear-gradient(135deg, #141C31, #1A2240);
+    border: 1px solid var(--dourado);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--titulo);
+    white-space: pre-wrap;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .mini-ceo .ceo-meta { font-size: 11px; color: var(--texto); margin-top: 6px; }
+  .mini-ceo .ceo-lancamentos { margin-top: 12px; }
+  .mini-ceo .ceo-lancamentos h4 { font-size: 12px; color: var(--texto); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .mini-ceo .lanc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0B1220;
+    border: 1px solid var(--linha);
+    border-radius: 8px;
+    padding: 7px 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .mini-ceo .lanc-item .lanc-info { color: var(--texto); line-height: 1.4; }
+  .mini-ceo .lanc-item .lanc-valor { font-weight: 800; white-space: nowrap; }
+  .mini-ceo .lanc-item .lanc-valor.entrada { color: #34D399; }
+  .mini-ceo .lanc-item .lanc-valor.saida { color: #FF6259; }
+  .mini-ceo .ceo-lanc-btn {
+    background: transparent;
+    border: 1px solid var(--linha);
+    color: var(--texto);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: 6px;
+  }
+  .mini-ceo .ceo-lanc-btn:hover { border-color: #FF6259; color: #FF6259; }
+  .mini-ceo .ceo-form-lanc {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+    background: #0B1220;
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .mini-ceo .ceo-form-lanc select, .mini-ceo .ceo-form-lanc input {
+    background: #0D1728;
+    color: var(--titulo);
+    border: 1px solid var(--linha);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12.5px;
+    font-family: inherit;
+  }
+  .mini-ceo .ceo-form-lanc button {
+    background: var(--roxo);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .mini-ceo .aviso-ceo { color: var(--dourado); font-size: 12.5px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Multi<span> PH</span></h1>
+  <p>Uma pergunta. Várias IAs respondendo ao mesmo tempo. Você escolhe a melhor.</p>
+  <div style="margin-top:12px"><a href="/negocio.html" style="display:inline-block;padding:9px 18px;background:var(--roxo);color:#fff;border-radius:10px;text-decoration:none;font-weight:800;font-size:13px">Meu Negócio</a></div>
+</header>
+
+<main>
+  <div class="coluna-principal">
+    <div class="caixa-pergunta">
+      <textarea id="pergunta" placeholder="Digite sua pergunta aqui..." autofocus></textarea>
+      <div class="botoes">
+        <button id="btnPerguntar">Perguntar para todas as IAs</button>
+        <label class="opcao">
+          <input type="checkbox" id="combinar">
+          Combinar respostas num resumo único
+        </label>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div id="resumo">
+      <h2>Resumo combinado das IAs</h2>
+      <p id="textoResumo"></p>
+    </div>
+
+    <div class="maestro" id="maestroInfo"></div>
+
+    <div id="grade"></div>
+  </div>
+
+  <aside class="lateral">
+    <div class="diario" id="diarioBox">
+      <div class="topo">
+        <h2>Informações de hoje</h2>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <span class="data" id="diarioData"></span>
+          <button class="secundario" id="btnAtualizar" style="padding:8px 14px;font-size:13px">Atualizar agora</button>
+        </div>
+      </div>
+      <div id="diarioConteudo">Carregando informações do dia...</div>
+    </div>
+  </aside>
+</main>
+
+<footer>Multi PH · rode no terminal com: node server.js · depois abra http://multi-ph</footer>
+
+<button class="botao-flutuante" id="btnAbrir" title="O que o Multi PH oferece">✦</button>
+
+<div class="painel-abas" id="painelAbas">
+  <div class="abas">
+    <button data-aba="slides" class="ativa">Criar slides</button>
+    <button data-aba="chat">Perguntar</button>
+    <button data-aba="hoje">Hoje</button>
+    <button data-aba="ceo">CEO IA</button>
+    <button data-aba="babel">Babel OS</button>
+  </div>
+  <div class="conteudo-aba" id="abaConteudo"></div>
+</div>
+
+<script>
+const btn = document.getElementById("btnPerguntar");
+const caixa = document.getElementById("pergunta");
+const status = document.getElementById("status");
+const grade = document.getElementById("grade");
+const resumoBox = document.getElementById("resumo");
+const textoResumo = document.getElementById("textoResumo");
+const combinar = document.getElementById("combinar");
+const diarioConteudo = document.getElementById("diarioConteudo");
+const diarioData = document.getElementById("diarioData");
+const btnAtualizar = document.getElementById("btnAtualizar");
+
+let diasDiario = [];
+
+function renderizarDiario(dia) {
+  if (!dia) {
+    diarioConteudo.innerHTML = "Ainda não há resumo de hoje. Clique em <b>Atualizar agora</b> para gerar.";
+    diarioData.textContent = "";
+    return;
+  }
+  const e = dia.dados;
+  diarioData.textContent = `Gerado ${dia.data} às ${dia.horaGerado}`;
+  const economia = [
+    e.cambio ? `<span class="pct">Dólar: <b>R$ ${e.cambio.dolar}</b> (${e.cambio.variacao}%)</span>` : "",
+    e.selic ? `<span class="pct">Selic: <b>${e.selic}% a.a.</b></span>` : "",
+    e.ipca ? `<span class="pct">IPCA: <b>${e.ipca}%</b></span>` : ""
+  ].filter(Boolean).join("");
+  const respostas = (dia.respostas || []).filter(r => r.ok)
+    .map(r => `<div class="resposta-ia"><b>${r.nome}</b><div class="texto">${r.resposta}</div></div>`)
+    .join("");
+  const sel = `<select id="selDia">${diasDiario.map(d => `<option value="${d.data}" ${d.data === dia.data ? "selected" : ""}>${d.data}</option>`).join("")}</select>`;
+  diarioConteudo.innerHTML = `
+    <div class="economia">${economia}</div>
+    <div class="resumo">${dia.resumo ? dia.resumo : "Resumo não gerado."}</div>
+    <div class="respostas-ias">${respostas}</div>
+    <div class="historico">Ver outro dia: ${sel}</div>`;
+  const selDia = document.getElementById("selDia");
+  if (selDia) selDia.addEventListener("change", () => {
+    const escolhido = diasDiario.find(d => d.data === selDia.value);
+    if (escolhido) renderizarDiario(escolhido);
+  });
+}
+
+async function carregarDiario() {
+  try {
+    const r = await fetch("/api/diario");
+    const j = await r.json();
+    diasDiario = j.dias || [];
+    if (diasDiario.length === 0) {
+      renderizarDiario(null);
+    } else {
+      renderizarDiario(diasDiario[0]);
+    }
+  } catch (e) {
+    diarioConteudo.innerHTML = "Erro ao carregar as informações do dia.";
+  }
+}
+
+btnAtualizar.addEventListener("click", async () => {
+  btnAtualizar.disabled = true;
+  btnAtualizar.textContent = "Buscando e gerando...";
+  diarioConteudo.innerHTML = "Coletando câmbio, Selic, IPCA e notícias de hoje e perguntando às IAs...";
+  try {
+    const r = await fetch("/api/diario/agora", { method: "POST" });
+    const j = await r.json();
+    if (j.aviso) {
+      diarioConteudo.innerHTML = j.aviso;
+    } else if (j.ok) {
+      await carregarDiario();
+    } else {
+      diarioConteudo.innerHTML = `Erro: ${j.erro || "desconhecido"}`;
+    }
+  } catch (e) {
+    diarioConteudo.innerHTML = `Erro: ${e.message}`;
+  } finally {
+    btnAtualizar.disabled = false;
+    btnAtualizar.textContent = "Atualizar agora";
+  }
+});
+
+carregarDiario();
+
+const btnAbrir = document.getElementById("btnAbrir");
+const painelAbas = document.getElementById("painelAbas");
+const abaConteudo = document.getElementById("abaConteudo");
+
+function renderizarAba(nome) {
+  if (nome === "slides") {
+    let slidesGerados = [];
+    let indice = 0;
+    abaConteudo.innerHTML = `
+      <div class="mini-slides">
+        <textarea id="temaSlides" placeholder="Sobre o que você quer a apresentação? Ex: Como conseguir crédito para uma empresa"></textarea>
+        <button id="btnGerarSlides">Gerar apresentação</button>
+        <div class="carregando-mini" id="slidesStatus" style="display:none">As IAs estão criando os slides...</div>
+        <div id="areaSlides"></div>
+      </div>`;
+    const tema = document.getElementById("temaSlides");
+    const gerar = document.getElementById("btnGerarSlides");
+    const statusS = document.getElementById("slidesStatus");
+    const area = document.getElementById("areaSlides");
+
+    const mostrarSlide = () => {
+      const s = slidesGerados[indice];
+      if (!s) return;
+      const pontos = Array.isArray(s.pontos) ? `<ul>${s.pontos.map(p => `<li>${p}</li>`).join("")}</ul>` : "";
+      const nav = slidesGerados.length > 1
+        ? `<div class="nav-slides"><button id="slideAnterior">‹</button><span style="font-size:12px;color:var(--texto);font-family:'JetBrains Mono',monospace">${indice + 1} / ${slidesGerados.length}</span><button id="slideProximo">›</button></div>`
+        : "";
+      area.innerHTML = `
+        <div class="slide-gerado">
+          <div class="contador-slide">Slide ${indice + 1} de ${slidesGerados.length}</div>
+          <div class="titulo-slide">${s.titulo}</div>
+          ${pontos}
+        </div>
+        ${nav}`;
+      const ant = document.getElementById("slideAnterior");
+      const prox = document.getElementById("slideProximo");
+      if (ant) ant.addEventListener("click", () => { indice = Math.max(0, indice - 1); mostrarSlide(); });
+      if (prox) prox.addEventListener("click", () => { indice = Math.min(slidesGerados.length - 1, indice + 1); mostrarSlide(); });
+    };
+
+    gerar.addEventListener("click", async () => {
+      const t = tema.value.trim();
+      if (!t) { area.innerHTML = '<div style="color:#FF6259;font-size:13px;margin-top:8px">Digite o tema da apresentação.</div>'; return; }
+      gerar.disabled = true;
+      statusS.style.display = "block";
+      area.innerHTML = "";
+      try {
+        const r = await fetch("/api/slides", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tema: t })
+        });
+        const j = await r.json();
+        statusS.style.display = "none";
+        if (j.aviso) { area.innerHTML = `<div style="color:var(--texto);font-size:13px">${j.aviso}</div>`; return; }
+        if (j.erro) { area.innerHTML = `<div style="color:#FF6259;font-size:13px">Erro: ${j.erro}</div>`; return; }
+        slidesGerados = j.slides || [];
+        indice = 0;
+        if (slidesGerados.length) mostrarSlide();
+      } catch (e) {
+        statusS.style.display = "none";
+        area.innerHTML = `<div style="color:#FF6259;font-size:13px">Erro: ${e.message}</div>`;
+      } finally {
+        gerar.disabled = false;
+      }
+    });
+  }
+
+  if (nome === "chat") {
+    abaConteudo.innerHTML = `
+      <div class="mini-chat">
+        <textarea id="miniPergunta" placeholder="Faça sua pergunta para todas as IAs..."></textarea>
+        <button id="miniEnviar">Perguntar</button>
+        <div class="carregando-mini" id="miniStatus" style="display:none">Consultando as IAs...</div>
+        <div class="resposta-mini" id="miniRespostas"></div>
+      </div>`;
+    const miniPergunta = document.getElementById("miniPergunta");
+    const miniEnviar = document.getElementById("miniEnviar");
+    const miniStatus = document.getElementById("miniStatus");
+    const miniRespostas = document.getElementById("miniRespostas");
+    const enviar = async () => {
+      const pergunta = miniPergunta.value.trim();
+      if (!pergunta) return;
+      miniEnviar.disabled = true;
+      miniStatus.style.display = "block";
+      try {
+        const r = await fetch("/api/perguntar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pergunta })
+        });
+        const j = await r.json();
+        miniStatus.style.display = "none";
+        miniRespostas.innerHTML = "";
+        (j.respostas || []).forEach(x => {
+          const div = document.createElement("div");
+          div.className = "r";
+          if (x.ok) {
+            const b = document.createElement("b");
+            b.textContent = x.nome;
+            div.appendChild(b);
+            div.appendChild(document.createTextNode(x.resposta));
+          } else {
+            div.innerHTML = `<b>${x.nome}</b> Erro: ${x.erro}`;
+          }
+          miniRespostas.appendChild(div);
+        });
+      } catch (e) {
+        miniStatus.style.display = "none";
+        miniRespostas.innerHTML = `<div class="r">Erro: ${e.message}</div>`;
+      } finally {
+        miniEnviar.disabled = false;
+      }
+    };
+    miniEnviar.addEventListener("click", enviar);
+    miniPergunta.addEventListener("keydown", e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") enviar();
+    });
+  }
+
+  if (nome === "hoje") {
+    abaConteudo.innerHTML = "Carregando...";
+    fetch("/api/diario")
+      .then(r => r.json())
+      .then(j => {
+        const dias = j.dias || [];
+        if (dias.length === 0) {
+          abaConteudo.innerHTML = "Ainda não há resumo de hoje. Use o botão 'Atualizar agora' na lateral.";
+          return;
+        }
+        const dia = dias[0];
+        const e = dia.dados;
+        const pcts = [
+          e.cambio ? `<span>Dólar: <b>R$ ${e.cambio.dolar}</b></span>` : "",
+          e.selic ? `<span>Selic: <b>${e.selic}%</b></span>` : "",
+          e.ipca ? `<span>IPCA: <b>${e.ipca}%</b></span>` : ""
+        ].filter(Boolean).join("");
+        const respostas = (dia.respostas || []).filter(r => r.ok)
+          .map(r => `<div class="resposta-mini"><div class="r"><b>${r.nome}</b>${r.resposta}</div></div>`)
+          .join("");
+        abaConteudo.innerHTML = `
+          <div class="mini-hoje">
+            <div class="pcts">${pcts}</div>
+            <div class="resumo-mini">${dia.resumo ? dia.resumo : "Resumo não gerado."}</div>
+            ${respostas}
+          </div>`;
+      })
+      .catch(() => { abaConteudo.innerHTML = "Erro ao carregar informações de hoje."; });
+  }
+
+  if (nome === "ceo") {
+    abaConteudo.innerHTML = `
+      <div class="mini-ceo">
+        <div class="ceo-cartoes" id="ceoCartoes">Carregando dados financeiros...</div>
+        <textarea id="ceoPergunta" placeholder='Pergunte como consultor. Ex: "Como posso aumentar meu lucro?"'></textarea>
+        <button class="ceo-btn" id="ceoEnviar">Perguntar ao CEO IA</button>
+        <div class="ceo-status" id="ceoStatus" style="display:none">O CEO IA está analisando seus números...</div>
+        <div class="ceo-resposta" id="ceoResposta" style="display:none"></div>
+        <div class="ceo-lancamentos">
+          <h4>Lançamentos recentes</h4>
+          <div id="ceoLancamentos">Carregando...</div>
+          <div class="ceo-form-lanc">
+            <select id="ceoLancTipo">
+              <option value="entrada">Entrada</option>
+              <option value="saida">Saída</option>
+            </select>
+            <input id="ceoLancCategoria" placeholder="Categoria (ex: venda, fornecedor)">
+            <input id="ceoLancDesc" placeholder="Descrição">
+            <input id="ceoLancValor" type="number" step="0.01" placeholder="Valor (R$)">
+            <button id="ceoLancSalvar">Lançar</button>
+          </div>
+        </div>
+      </div>`;
+
+    const cartoes = document.getElementById("ceoCartoes");
+    const lancArea = document.getElementById("ceoLancamentos");
+    const moeda = v => "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
+    const cls = v => v >= 0 ? "pos" : "neg";
+
+    const renderizarCartoes = r => {
+      cartoes.innerHTML =
+        `<div class="ceo-cartao"><div class="ceo-t">Hoje</div><div class="ceo-d pos">${moeda(r.entradasHoje)}</div></div>` +
+        `<div class="ceo-cartao"><div class="ceo-t">Lucro hoje</div><div class="ceo-d ${cls(r.lucroHoje)}">${moeda(r.lucroHoje)}</div></div>` +
+        `<div class="ceo-cartao"><div class="ceo-t">Semana</div><div class="ceo-d pos">${moeda(r.entradasSemana)}</div></div>` +
+        `<div class="ceo-cartao"><div class="ceo-t">Mês</div><div class="ceo-d pos">${moeda(r.entradasMes)}</div></div>` +
+        `<div class="ceo-cartao"><div class="ceo-t">Despesas mês</div><div class="ceo-d neg">${moeda(r.saidasMes)}</div></div>` +
+        `<div class="ceo-cartao"><div class="ceo-t">Lucro mês</div><div class="ceo-d ${cls(r.lucroMes)}">${moeda(r.lucroMes)}</div></div>`;
+    };
+
+    const renderizarLancamentos = lista => {
+      if (!lista || !lista.length) {
+        lancArea.innerHTML = '<div style="color:var(--texto);font-size:12px">Nenhum lançamento ainda.</div>';
+        return;
+      }
+      lancArea.innerHTML = lista.map(l =>
+        `<div class="lanc-item">
+          <div class="lanc-info"><b style="color:var(--titulo)">${l.categoria}</b><br>${l.data}${l.descricao ? " · " + l.descricao : ""}</div>
+          <div style="display:flex;align-items:center">
+            <span class="lanc-valor ${l.tipo}">${moeda(l.valor)}</span>
+            <button class="ceo-lanc-btn" data-id="${l.id}">✕</button>
+          </div>
+        </div>`).join("");
+      lancArea.querySelectorAll(".ceo-lanc-btn").forEach(b => b.addEventListener("click", async () => {
+        await fetch("/api/financeiro?id=" + b.dataset.id, { method: "DELETE" });
+        carregarCeo();
+      }));
+    };
+
+    async function carregarCeo() {
+      try {
+        const r = await fetch("/api/financeiro");
+        const j = await r.json();
+        renderizarCartoes(j);
+        renderizarLancamentos(j.ultimos || []);
+      } catch (e) {
+        cartoes.innerHTML = "Erro ao carregar financeiro.";
+      }
+    }
+    carregarCeo();
+
+    document.getElementById("ceoLancSalvar").addEventListener("click", async () => {
+      const valor = Number(document.getElementById("ceoLancValor").value);
+      if (!(valor > 0)) return;
+      await fetch("/api/financeiro/lancar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: document.getElementById("ceoLancTipo").value,
+          categoria: document.getElementById("ceoLancCategoria").value,
+          descricao: document.getElementById("ceoLancDesc").value,
+          valor
+        })
+      });
+      document.getElementById("ceoLancCategoria").value = "";
+      document.getElementById("ceoLancDesc").value = "";
+      document.getElementById("ceoLancValor").value = "";
+      carregarCeo();
+    });
+
+    document.getElementById("ceoEnviar").addEventListener("click", async () => {
+      const pergunta = document.getElementById("ceoPergunta").value.trim();
+      const statusC = document.getElementById("ceoStatus");
+      const respostaDiv = document.getElementById("ceoResposta");
+      if (!pergunta) return;
+      document.getElementById("ceoEnviar").disabled = true;
+      statusC.style.display = "block";
+      respostaDiv.style.display = "none";
+      try {
+        const r = await fetch("/api/ceo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pergunta })
+        });
+        const j = await r.json();
+        statusC.style.display = "none";
+        if (j.aviso) { respostaDiv.textContent = j.aviso; respostaDiv.style.display = "block"; return; }
+        if (j.erro) { respostaDiv.textContent = "Erro: " + j.erro; respostaDiv.style.display = "block"; return; }
+        respostaDiv.textContent = j.resposta;
+        respostaDiv.style.display = "block";
+      } catch (e) {
+        statusC.style.display = "none";
+        respostaDiv.textContent = "Erro: " + e.message;
+        respostaDiv.style.display = "block";
+      } finally {
+        document.getElementById("ceoEnviar").disabled = false;
+      }
+    });
+  }
+
+  if (nome === "babel") {
+    const ofertas = [
+      { t: "Atendimento 24/7", d: "Responde na hora, todos os dias, sem pausa e sem fila. Nenhum lead caro fica esperando." },
+      { t: "Contrato em 1 clique", d: "A mesma IA que vendeu emite o contrato e o link de pagamento — dentro do chat em que vendeu." },
+      { t: "Recebe PIX", d: "Link de pagamento direto na conversa, com garantia de 30 dias." },
+      { t: "Captura dados", d: "Sistema de clientes, funil e financeiro feitos para a IA operar — um sistema só." },
+      { t: "Memória que não esquece", d: "Lembra da conversa curta e da história inteira. Retoma o cliente onde parou — mesmo 6 meses depois." },
+      { t: "Busca por intenção", d: "Faz o raio-x do lead: traz os que têm intenção de compra e aborda pela dúvida específica que travou cada um." },
+      { t: "Não é robô de resposta", d: "Responde dúvidas e fecha na própria conversa. Zero menu. Adapta o tom ao humor de quem está do outro lado." },
+      { t: "Leads parados voltam sozinhos", d: "Leads que esfriaram são reabordados automaticamente pela dúvida que travou cada um." },
+      { t: "Base de conhecimento", d: "A empresa envia PDFs e regras que já usa — a IA mastiga o conhecimento por conta própria." },
+      { t: "Mentora da operação", d: "Configuração inicial guiada pelo Mentor: arquitetura da operação, regras e base de conhecimento." },
+      { t: "Nunca inventa resposta", d: "Só fala com base no conhecimento da empresa. Se não souber, diz que não sabe." },
+      { t: "LGPD", d: "Dados criptografados e isolados por empresa. A Babel é operadora — a sua empresa segue como controladora dos dados." }
+    ];
+    abaConteudo.innerHTML = `
+      <div class="mini-babel">
+        <div class="babel-cab">
+          <div style="font-size:15px;font-weight:800;color:var(--titulo);letter-spacing:.5px">BABEL OS</div>
+          <div style="font-size:11px;color:var(--teal);margin:2px 0 4px">SISTEMA OPERACIONAL AUTÔNOMO DE NEGÓCIOS</div>
+          <div style="font-size:12px;line-height:1.5">A primeira IA que não apenas atende seus clientes — ela opera a sua empresa inteira.</div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--texto);margin:10px 2px 6px;text-transform:uppercase;letter-spacing:.5px">O que a Babel oferece</div>
+        <div class="babel-grade">
+          ${ofertas.map(o => `
+            <div class="babel-card">
+              <div class="babel-t">${o.t}</div>
+              <div class="babel-d">${o.d}</div>
+            </div>`).join("")}
+        </div>
+        <div class="babel-roda" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--dourado);border-radius:10px;font-size:12px;line-height:1.5;color:var(--texto)">
+          <b style="color:var(--dourado)">Plano Representante Comercial:</b> a empresa vira representante oficial da Babel OS — recebe implementação completa e o 1º mês de acesso inclusos, com comissão recorrente por cliente ativo.
+        </div>
+        <div style="font-size:11px;color:var(--texto);margin-top:8px;line-height:1.5">
+          Garantia de 30 dias: se a operação não sentir a tração, a empresa sai. Pagamento só a partir do 31º dia, se decidir continuar.
+        </div>
+      </div>`;
+  }
+}
+
+btnAbrir.addEventListener("click", () => {
+  painelAbas.classList.toggle("visivel");
+  const abaAtiva = document.querySelector(".painel-abas .abas button.ativa")?.dataset.aba || "slides";
+  renderizarAba(abaAtiva);
+});
+
+document.querySelectorAll(".painel-abas .abas button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".painel-abas .abas button").forEach(x => x.classList.remove("ativa"));
+    b.classList.add("ativa");
+    renderizarAba(b.dataset.aba);
+  });
+});
+
+function copiarTexto(texto) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(texto).catch(() => copiarFallback(texto));
+    return true;
+  }
+  return copiarFallback(texto);
+}
+
+function copiarFallback(texto) {
+  const area = document.createElement("textarea");
+  area.value = texto;
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.appendChild(area);
+  area.focus();
+  area.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(area);
+  return ok;
+}
+
+btn.addEventListener("click", async () => {
+  const pergunta = caixa.value.trim();
+  if (!pergunta) {
+    status.innerHTML = '<span class="erro">Digite uma pergunta primeiro.</span>';
+    return;
+  }
+  btn.disabled = true;
+  combinar.disabled = true;
+  grade.innerHTML = "";
+  resumoBox.style.display = "none";
+  status.innerHTML = '<span class="carregando">Consultando todas as IAs ao mesmo tempo...</span>';
+
+  try {
+    const r = await fetch("/api/perguntar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pergunta })
+    });
+    const dados = await r.json();
+
+    if (dados.aviso) {
+      status.innerHTML = `<span class="erro">${dados.aviso}</span>`;
+      btn.disabled = false;
+      combinar.disabled = false;
+      return;
+    }
+
+    const comErro = dados.respostas.filter(x => !x.ok).length;
+    status.innerHTML = dados.respostas.length
+      ? `Pronto! ${dados.respostas.length} IA(s) responderam${comErro ? ` — ${comErro} com erro` : ""}.`
+      : "";
+
+    if (dados.tipo) {
+      const maestroInfo = document.getElementById("maestroInfo");
+      const nomes = { gemini: "Google Gemini", groq: "Groq (Llama)", "openrouter-gptoss": "OpenAI GPT-OSS", "openrouter-nemotron": "NVIDIA Nemotron", "openrouter-ling": "Ling Flash" };
+      maestroInfo.style.display = "block";
+      maestroInfo.innerHTML = `🧠 <b>Maestro:</b> pergunta de <b>${dados.descricao}</b> — IA recomendada: <span class="selo-maestro">${nomes[dados.recomendada] || dados.recomendada}</span>`;
+    }
+
+    dados.respostas.forEach((r2, i) => {
+      const card = document.createElement("div");
+      card.className = "card-resposta";
+      if (dados.recomendada && r2.id === dados.recomendada) card.classList.add("recomendada");
+      card.style.animationDelay = `${i * 0.1}s`;
+      const topo = document.createElement("div");
+      topo.className = "topo";
+      const selo = dados.recomendada && r2.id === dados.recomendada ? '<span class="selo">Maestro</span>' : "";
+      topo.innerHTML = `<div><span class="ponto" style="background:${r2.cor}"></span><span class="nome">${r2.nome}</span>${selo}</div><span class="modelo">${r2.modelo}</span>`;
+      const corpo = document.createElement("div");
+      corpo.className = "corpo";
+      if (r2.ok) {
+        corpo.textContent = r2.resposta;
+      } else {
+        corpo.classList.add("erro-texto");
+        corpo.textContent = "Erro: " + r2.erro;
+      }
+      const acoes = document.createElement("div");
+      acoes.className = "acoes";
+      const copiar = document.createElement("button");
+      copiar.textContent = "Copiar resposta";
+      copiar.addEventListener("click", () => {
+        const texto = r2.resposta || r2.erro || "";
+        const ok = copiarTexto(texto);
+        copiar.textContent = ok ? "Copiado!" : "Erro ao copiar";
+        setTimeout(() => { copiar.textContent = "Copiar resposta"; }, 2000);
+      });
+      acoes.appendChild(copiar);
+      card.appendChild(topo);
+      card.appendChild(corpo);
+      card.appendChild(acoes);
+      grade.appendChild(card);
+    });
+
+    if (combinar.checked) {
+      status.innerHTML = '<span class="carregando">Gerando resumo combinado...</span>';
+      const rr = await fetch("/api/resumir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pergunta, respostas: dados.respostas })
+      });
+      const dr = await rr.json();
+      resumoBox.style.display = "block";
+      textoResumo.textContent = dr.resumo;
+      status.innerHTML = "Pronto! Resumo combinado gerado acima.";
+    }
+  } catch (e) {
+    status.innerHTML = `<span class="erro">Erro: ${e.message}</span>`;
+  } finally {
+    btn.disabled = false;
+    combinar.disabled = false;
+  }
+});
+
+caixa.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") btn.click();
+});
+</script>
+</body>
+</html>
