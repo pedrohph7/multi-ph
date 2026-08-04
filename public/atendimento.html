@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atendimento</title>
+<style>
+  :root {
+    --fundo: #0B1220;
+    --card: #111C31;
+    --linha: #1F2C45;
+    --titulo: #F3F7FA;
+    --texto: #A9BAC9;
+    --roxo: #8B5CF6;
+    --teal: #2DD4C6;
+    --verde: #34D399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .janela {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card);
+    border: 1px solid var(--linha);
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: min(640px, 92vh);
+  }
+  .topo {
+    background: linear-gradient(135deg, #1A2240, #141C31);
+    border-bottom: 1px solid var(--linha);
+    padding: 16px 18px;
+  }
+  .topo h1 { color: var(--titulo); font-size: 16px; font-weight: 800; }
+  .topo .status-online { color: var(--verde); font-size: 11.5px; font-weight: 700; margin-top: 3px; }
+  .topo .status-online::before { content: "•"; margin-right: 4px; }
+  .etapa {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .campo { display: flex; flex-direction: column; gap: 5px; }
+  .campo label { font-size: 12px; font-weight: 700; }
+  input {
+    background: #0D1728;
+    color: var(--titulo);
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 11px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+  }
+  input:focus { border-color: var(--roxo); }
+  .consent { display: flex; gap: 9px; font-size: 11.5px; line-height: 1.45; align-items: flex-start; }
+  .consent input { width: auto; margin-top: 2px; }
+  button {
+    background: var(--roxo);
+    border: none;
+    color: var(--titulo);
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button:disabled { opacity: .5; cursor: wait; }
+  .chat {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .msgs {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .msg { max-width: 85%; padding: 9px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; }
+  .msg.ia { align-self: flex-start; background: #0D1728; color: var(--texto); border: 1px solid var(--linha); border-top-left-radius: 4px; }
+  .msg.cliente { align-self: flex-end; background: var(--roxo); color: var(--titulo); border-top-right-radius: 4px; }
+  .digitando { align-self: flex-start; color: var(--teal); font-size: 12px; padding: 4px 6px; }
+  .rodape {
+    display: none;
+    gap: 8px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--linha);
+    background: #0E1830;
+  }
+  .rodape input { flex: 1; }
+  .rodape button { width: auto; padding: 11px 18px; }
+  .humano {
+    display: none;
+    padding: 0 14px 12px;
+    font-size: 11.5px;
+    text-align: center;
+  }
+  .humano a { color: var(--teal); font-weight: 700; }
+  .erro { color: #FF6259; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="janela">
+  <div class="topo">
+    <h1 id="nomeEmpresa">Empresa</h1>
+    <div class="status-online">Atendimento com IA — 24 horas por dia, todos os dias</div>
+  </div>
+
+  <div class="etapa" id="etapaInicial">
+    <div style="font-size:13px;line-height:1.6">
+      Bem-vindo! Para começar, conte como podemos te ajudar.
+      Em poucos segundos um atendente responde — sem fila e sem espera.
+    </div>
+    <div class="campo">
+      <label>Seu nome</label>
+      <input id="nome" placeholder="Seu nome">
+    </div>
+    <div class="campo">
+      <label>Seu WhatsApp (com DDD)</label>
+      <input id="whats" placeholder="11999999999">
+    </div>
+    <label class="consent">
+      <input type="checkbox" id="consent">
+      <span id="lgpdMsg">Autorizo o uso dos meus dados para este atendimento (LGPD). Posso pedir a exclusão a qualquer momento.</span>
+    </label>
+    <button id="iniciar">Iniciar atendimento</button>
+    <div id="erroInicial"></div>
+  </div>
+
+  <div class="chat" id="chat">
+    <div class="msgs" id="msgs"></div>
+    <div class="humano" id="humano"></div>
+    <div class="rodape" id="rodape">
+      <input id="entrada" placeholder="Escreva sua mensagem..." autocomplete="off">
+      <button id="enviar">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const empresaCache = { nome: "Empresa", lgpd_msg: "" };
+let leadId = null;
+let primeiro = true;
+
+const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+async function api(url, opcoes) {
+  const r = await fetch(url, opcoes);
+  return r.json();
+}
+
+function adicionarMsg(de, texto) {
+  const div = document.createElement("div");
+  div.className = "msg " + (de === "cliente" ? "cliente" : "ia");
+  div.textContent = texto;
+  document.getElementById("msgs").appendChild(div);
+  document.getElementById("msgs").scrollTop = document.getElementById("msgs").scrollHeight;
+}
+
+fetch("/api/empresa").then(j => {
+  empresaCache.nome = j.nome || "Empresa";
+  empresaCache.lgpd_msg = j.lgpd_msg || "Autorizo o uso dos meus dados para este atendimento (LGPD). Posso pedir a exclusão a qualquer momento.";
+  empresaCache.whatsapp = j.whatsapp || "";
+  document.getElementById("nomeEmpresa").textContent = empresaCache.nome;
+  document.getElementById("lgpdMsg").textContent = empresaCache.lgpd_msg;
+  const h = document.getElementById("humano");
+  if (empresaCache.whatsapp) {
+    h.innerHTML = 'Quer falar com uma pessoa? <a target="_blank" href="https://wa.me/' + empresaCache.whatsapp.replace(/\D/g, "") + '">Chamar o time pelo WhatsApp</a>';
+    h.style.display = "block";
+  }
+}).catch(() => {});
+
+document.getElementById("iniciar").addEventListener("click", async () => {
+  const nome = document.getElementById("nome").value.trim();
+  const whats = document.getElementById("whats").value.trim();
+  const err = document.getElementById("erroInicial");
+  if (!nome || !whats) { err.innerHTML = '<div class="erro">Preencha nome e WhatsApp para começar.</div>'; return; }
+  if (!document.getElementById("consent").checked) { err.innerHTML = '<div class="erro">É preciso autorizar o uso dos dados para iniciar.</div>'; return; }
+  err.innerHTML = "";
+  document.getElementById("etapaInicial").style.display = "none";
+  document.getElementById("chat").style.display = "flex";
+  document.getElementById("rodape").style.display = "flex";
+  adicionarMsg("ia", "Olá " + nome + "! Tudo bem? Como posso te ajudar hoje?");
+  const j = await api("/api/atendimento", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome, whatsapp: whats, origem: "atendimento", mensagem: "Olá! Gostaria de saber mais sobre os serviços." })
+  });
+  if (j.leadId) leadId = j.leadId;
+  if (j.resposta) adicionarMsg("ia", j.resposta);
+  primeiro = false;
+  document.getElementById("entrada").focus();
+});
+
+async function enviar() {
+  const entrada = document.getElementById("entrada");
+  const texto = entrada.value.trim();
+  if (!texto) return;
+  entrada.value = "";
+  adicionarMsg("cliente", texto);
+  const d = document.createElement("div");
+  d.className = "digitando";
+  d.textContent = "atendente digitando...";
+  document.getElementById("msgs").appendChild(d);
+  document.getElementById("msgs").scrollTop = document.getElementById("msgs").scrollHeight;
+  const botao = document.getElementById("enviar");
+  botao.disabled = true;
+  try {
+    const j = await api("/api/atendimento", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId, mensagem: texto })
+    });
+    d.remove();
+    if (j.leadId) leadId = j.leadId;
+    if (j.resposta) adicionarMsg("ia", j.resposta);
+  } catch (e) {
+    d.remove();
+    adicionarMsg("ia", "Desculpe, tivemos um problema. Pode tentar de novo?");
+  } finally {
+    botao.disabled = false;
+    entrada.focus();
+  }
+}
+
+document.getElementById("enviar").addEventListener("click", enviar);
+document.getElementById("entrada").addEventListener("keydown", e => { if (e.key === "Enter") enviar(); });
+</script>
+</body>
+</html>
