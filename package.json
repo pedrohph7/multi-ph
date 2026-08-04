@@ -1,0 +1,12 @@
+{
+  "name": "multi-ph",
+  "version": "1.0.0",
+  "description": "Multi PH - Plataforma com IA para consultoria de crédito empresarial",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

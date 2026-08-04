@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi PH · Meu Negócio</title>
+<style>
+  :root {
+    --fundo: #0B1220;
+    --card: #111C31;
+    --linha: #1F2C45;
+    --titulo: #F3F7FA;
+    --texto: #A9BAC9;
+    --roxo: #8B5CF6;
+    --teal: #2DD4C6;
+    --dourado: #E8A94A;
+    --verde: #34D399;
+    --vermelho: #FF6259;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    padding: 22px 24px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 1px solid var(--linha);
+    position: sticky;
+    top: 0;
+    background: rgba(11, 18, 32, .95);
+    z-index: 10;
+  }
+  header h1 { color: var(--titulo); font-size: 24px; font-weight: 800; letter-spacing: 1px; }
+  header h1 span { color: var(--teal); }
+  .links-topo { display: flex; gap: 10px; flex-wrap: wrap; }
+  a.btn, button.btn {
+    display: inline-block;
+    padding: 9px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--linha);
+    background: var(--card);
+    color: var(--titulo);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+  }
+  a.btn:hover, button.btn:hover { border-color: var(--roxo); }
+  a.btn.primario, button.btn.primario { background: var(--roxo); border-color: var(--roxo); }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .stat .n { font-size: 26px; font-weight: 800; color: var(--titulo); }
+  .stat .r { font-size: 12px; margin-top: 2px; }
+  .stat.teal .n { color: var(--teal); }
+  .stat.dourado .n { color: var(--dourado); }
+  .stat.verde .n { color: var(--verde); }
+  .abas {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .abas button {
+    padding: 9px 16px;
+    background: transparent;
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    color: var(--texto);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .abas button.ativa { background: var(--roxo); border-color: var(--roxo); color: var(--titulo); }
+  .painel { background: var(--card); border: 1px solid var(--linha); border-radius: 14px; padding: 18px; }
+  .painel h2 { color: var(--titulo); font-size: 17px; margin-bottom: 12px; }
+  .painel h3 { color: var(--titulo); font-size: 14px; margin: 14px 0 8px; }
+  .form-linha {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .campo { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 150px; }
+  .campo label { font-size: 11.5px; font-weight: 700; color: var(--texto); }
+  input, select, textarea {
+    background: #0D1728;
+    color: var(--titulo);
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    padding: 9px 11px;
+    font-size: 13.5px;
+    font-family: inherit;
+    outline: none;
+    width: 100%;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  input:focus, select:focus, textarea:focus { border-color: var(--roxo); }
+  button.primario {
+    background: var(--roxo);
+    border: 1px solid var(--roxo);
+    color: var(--titulo);
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button.primario:disabled { opacity: .5; cursor: wait; }
+  button.pequeno {
+    background: transparent;
+    border: 1px solid var(--linha);
+    color: var(--texto);
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button.pequeno:hover { border-color: var(--roxo); color: var(--titulo); }
+  button.pequeno.verde { color: var(--verde); border-color: var(--verde); }
+  button.pequeno.vermelho { color: var(--vermelho); border-color: var(--vermelho); }
+  .aviso { color: var(--teal); font-size: 12.5px; margin-top: 8px; }
+  .erro { color: var(--vermelho); font-size: 12.5px; margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--linha); font-size: 13px; vertical-align: middle; }
+  th { color: var(--texto); font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px; }
+  td .nome { color: var(--titulo); font-weight: 700; }
+  .status { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+  .st-novo { background: rgba(139, 92, 246, .15); color: var(--roxo); }
+  .st-qualificado { background: rgba(45, 212, 198, .12); color: var(--teal); }
+  .st-negociando { background: rgba(232, 169, 74, .15); color: var(--dourado); }
+  .st-fechado { background: rgba(52, 211, 153, .15); color: var(--verde); }
+  .st-perdido { background: rgba(255, 98, 89, .12); color: var(--vermelho); }
+  .acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modal-fundo {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, .6);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .modal-fundo.visivel { display: flex; }
+  .modal {
+    background: #0E1830;
+    border: 1px solid var(--linha);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .modal h3 { color: var(--titulo); margin-bottom: 10px; }
+  .chat {
+    background: #0B1220;
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+    padding: 12px;
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .msg { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.45; }
+  .msg.cliente { align-self: flex-end; background: var(--roxo); color: var(--titulo); }
+  .msg.ia { align-self: flex-start; background: var(--card); color: var(--texto); border: 1px solid var(--linha); }
+  .msg.dono { align-self: flex-start; background: rgba(45, 212, 198, .12); color: var(--teal); border: 1px solid rgba(45, 212, 198, .35); }
+  .msg .quem { font-size: 10.5px; font-weight: 800; margin-bottom: 3px; opacity: .75; text-transform: uppercase; }
+  .raiox-box { background: #0B1220; border: 1px solid var(--linha); border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.6; }
+  .raiox-box b { color: var(--titulo); }
+  .lista-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 11px 4px; border-bottom: 1px solid var(--linha); font-size: 13px;
+  }
+  .lista-item:last-child { border-bottom: none; }
+  .lista-item b { color: var(--titulo); }
+  .qr img { width: 170px; height: 170px; border-radius: 10px; border: 1px solid var(--linha); background: #fff; }
+  .brcode {
+    word-break: break-all; font-size: 11px; color: var(--texto);
+    background: #0B1220; border: 1px solid var(--linha); border-radius: 8px; padding: 8px;
+    margin-top: 8px; font-family: "JetBrains Mono", Consolas, monospace;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+  .vazio { color: var(--texto); font-size: 13px; padding: 14px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Multi<span> PH</span> · Meu Negócio</h1>
+  <div class="links-topo">
+    <a class="btn" href="/">Voltar ao Multi PH</a>
+    <a class="btn" href="/atendimento.html" target="_blank">Página de atendimento</a>
+  </div>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+  <div class="abas" id="abasTopo">
+    <button data-aba="visao" class="ativa">Visão geral</button>
+    <button data-aba="leads">Leads</button>
+    <button data-aba="contratos">Contratos</button>
+    <button data-aba="cobrancas">Cobranças PIX</button>
+    <button data-aba="conhecimento">Conhecimento</button>
+    <button data-aba="config">Configurações</button>
+  </div>
+  <div class="painel" id="painel"></div>
+</main>
+
+<script>
+const painel = document.getElementById("painel");
+const statsBox = document.getElementById("stats");
+let leadsCache = [];
+let contratosCache = [];
+let cobrancasCache = [];
+let conhecimentoCache = [];
+let empresaCache = null;
+
+const f = (n) => "R$ " + Number(n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const statusCls = { novo: "st-novo", qualificado: "st-qualificado", negociando: "st-negociando", fechado: "st-fechado", perdido: "st-perdido" };
+const statusNome = { novo: "Novo", qualificado: "Qualificado", negociando: "Negociando", fechado: "Fechado", perdido: "Perdido" };
+const qrUrl = (brcode) => "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(brcode);
+const waLink = (tel, texto) => "https://wa.me/" + (tel || "").replace(/\D/g, "") + "?text=" + encodeURIComponent(texto);
+
+function copiarTexto(texto) {
+  if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(texto); return; }
+  const ta = document.createElement("textarea");
+  ta.value = texto; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
+}
+
+async function api(url, opcoes) {
+  const r = await fetch(url, opcoes);
+  return r.json();
+}
+
+async function carregarTudo() {
+  const [v, e] = await Promise.all([api("/api/visao"), api("/api/empresa")]);
+  empresaCache = e;
+  renderStats(v);
+}
+
+function renderStats(v) {
+  statsBox.innerHTML = `
+    <div class="stat"><div class="n">${v.leads}</div><div class="r">Leads capturados</div></div>
+    <div class="stat"><div class="n">${v.status.novo || 0}</div><div class="r">Novos</div></div>
+    <div class="stat teal"><div class="n">${v.status.qualificado || 0}</div><div class="r">Qualificados</div></div>
+    <div class="stat dourado"><div class="n">${v.status.negociando || 0}</div><div class="r">Negociando</div></div>
+    <div class="stat verde"><div class="n">${v.assinados}</div><div class="r">Contratos assinados</div></div>
+    <div class="stat dourado"><div class="n">${f(v.aReceber)}</div><div class="r">PIX a receber</div></div>`;
+}
+
+function renderVisao() {
+  Promise.all([api("/api/leads/parados"), api("/api/cobrancas")]).then(([p, c]) => {
+    const pendentes = c.cobrancas.filter(x => !x.pago);
+    painel.innerHTML = `
+      <h2>Visão geral do negócio</h2>
+      <h3>Leads parados (sem contato há 3+ dias)</h3>
+      ${p.parados.length === 0 ? '<div class="vazio">Nenhum lead parado. Todos sendo acompanhados.</div>' : `
+      <table><thead><tr><th>Nome</th><th>Status</th><th>Dias parado</th><th>Ação</th></tr></thead><tbody>
+        ${p.parados.map(l => `
+          <tr>
+            <td><span class="nome">${esc(l.nome)}</span></td>
+            <td><span class="status ${statusCls[l.status] || "st-novo"}">${statusNome[l.status] || "Novo"}</span></td>
+            <td>${l.diasParado} dias</td>
+            <td><a class="btn pequeno verde" href="${waLink(l.whatsapp, "Olá " + l.nome + "! Passando pra retomar nosso papo — quer ajuda pra resolver sua dúvida?")}" target="_blank">Reativar no WhatsApp</a></td>
+          </tr>`).join("")}
+      </tbody></table>`}
+      <h3>PIX pendentes de recebimento</h3>
+      ${pendentes.length === 0 ? '<div class="vazio">Nenhuma cobrança pendente.</div>' : `
+      <table><thead><tr><th>Lead</th><th>Descrição</th><th>Valor</th><th>Criada</th></tr></thead><tbody>
+        ${pendentes.map(x => `
+          <tr><td><span class="nome">${esc(x.leadNome)}</span></td><td>${esc(x.descricao)}</td><td><b>${f(x.valor)}</b></td><td>${x.criado}</td></tr>`).join("")}
+      </tbody></table>`}`;
+  });
+}
+
+async function renderLeads() {
+  const j = await api("/api/leads");
+  leadsCache = j.leads;
+  painel.innerHTML = `
+    <h2>Leads capturados</h2>
+    <div class="form-linha">
+      <div class="campo"><label>Nome</label><input id="leadNome" placeholder="Nome do lead"></div>
+      <div class="campo"><label>WhatsApp (com DDD)</label><input id="leadWhats" placeholder="11999999999"></div>
+      <div class="campo"><label>Origem</label><select id="leadOrigem">
+        <option value="site">Site</option><option value="whatsapp">WhatsApp</option>
+        <option value="indicacao">Indicação</option><option value="instagram">Instagram</option><option value="outro">Outro</option>
+      </select></div>
+      <button class="primario" id="btnAddLead">Adicionar lead</button>
+    </div>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:12px">
+      <input type="checkbox" id="leadConsent" style="width:auto" checked> Lead autorizou o contato (LGPD)
+    </label>
+    <div id="msgLeads"></div>
+    <table><thead><tr>
+      <th>Nome</th><th>WhatsApp</th><th>Origem</th><th>Status</th><th>Nota</th><th>Valor</th><th>Último contato</th><th>Ações</th>
+    </tr></thead><tbody id="corpoLeads"></tbody></table>`;
+  document.getElementById("btnAddLead").addEventListener("click", async () => {
+    const r = await api("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: document.getElementById("leadNome").value,
+        whatsapp: document.getElementById("leadWhats").value,
+        origem: document.getElementById("leadOrigem").value,
+        consentimento: document.getElementById("leadConsent").checked
+      })
+    });
+    if (r.erro) { document.getElementById("msgLeads").innerHTML = `<div class="erro">${esc(r.erro)}</div>`; return; }
+    document.getElementById("leadNome").value = "";
+    document.getElementById("leadWhats").value = "";
+    document.getElementById("msgLeads").innerHTML = "";
+    await renderLeads();
+    carregarTudo();
+  });
+  renderCorpoLeads();
+}
+
+function renderCorpoLeads() {
+  const corpo = document.getElementById("corpoLeads");
+  if (!corpo) return;
+  if (leadsCache.length === 0) { corpo.innerHTML = '<tr><td colspan="8" class="vazio">Nenhum lead ainda. Adicione o primeiro acima.</td></tr>'; return; }
+  corpo.innerHTML = leadsCache.map(l => `
+    <tr>
+      <td><span class="nome">${esc(l.nome)}</span></td>
+      <td>${esc(l.whatsapp)}</td>
+      <td>${esc(l.origem)}</td>
+      <td><select data-id="${l.id}" class="selStatus" style="width:auto;padding:5px 8px;font-size:12px">
+        ${Object.keys(statusNome).map(s => `<option value="${s}" ${l.status === s ? "selected" : ""}>${statusNome[s]}</option>`).join("")}
+      </select></td>
+      <td><input type="number" step="0.1" min="0" max="10" data-id="${l.id}" class="inpNota" value="${l.nota ?? ""}" style="width:62px;padding:5px 8px;font-size:12px" placeholder="0-10"></td>
+      <td><input type="number" step="0.01" data-id="${l.id}" class="inpValor" value="${l.valor ?? ""}" style="width:100px;padding:5px 8px;font-size:12px" placeholder="R$"></td>
+      <td>${esc(l.ultimoContato || l.criado)}</td>
+      <td><div class="acoes">
+        <button class="pequeno" data-id="${l.id}" data-acao="conversa">Conversa</button>
+        <button class="pequeno" data-id="${l.id}" data-acao="raiox">Raio-X</button>
+        <button class="pequeno vermelho" data-id="${l.id}" data-acao="excluir">Excluir</button>
+      </div></td>
+    </tr>`).join("");
+  corpo.querySelectorAll(".selStatus").forEach(s => s.addEventListener("change", async () => {
+    await api("/api/leads", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: s.dataset.id, status: s.value }) });
+    carregarTudo();
+  }));
+  corpo.querySelectorAll(".inpNota").forEach(i => i.addEventListener("change", async () => {
+    await api("/api/leads", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: i.dataset.id, nota: i.value }) });
+  }));
+  corpo.querySelectorAll(".inpValor").forEach(i => i.addEventListener("change", async () => {
+    await api("/api/leads", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: i.dataset.id, valor: i.value }) });
+  }));
+  corpo.querySelectorAll("[data-acao]").forEach(b => b.addEventListener("click", async () => {
+    const id = b.dataset.id;
+    const acao = b.dataset.acao;
+    const lead = leadsCache.find(l => l.id === id);
+    if (acao === "excluir") {
+      if (!confirm("Excluir o lead " + lead.nome + " e todo o histórico dele (LGPD)? Esta ação remove os dados.")) return;
+      await api("/api/leads?id=" + id, { method: "DELETE" });
+      await renderLeads();
+      carregarTudo();
+    } else if (acao === "conversa") {
+      abrirConversa(lead);
+    } else if (acao === "raiox") {
+      abrirRaiox(lead);
+    }
+  }));
+}
+
+function abrirConversa(lead) {
+  const fundo = document.createElement("div");
+  fundo.className = "modal-fundo visivel";
+  fundo.innerHTML = `
+    <div class="modal">
+      <h3>Conversa com ${esc(lead.nome)}</h3>
+      <div class="chat" id="chatMsgs"></div>
+      <div class="form-linha">
+        <div class="campo"><label>Simular mensagem do cliente</label><input id="chatTexto" placeholder="Ex: Quanto custa a consultoria?"></div>
+        <button class="primario" id="chatResponder">IA responde</button>
+      </div>
+      <div id="chatMsg"></div>
+      <div class="form-linha" style="margin-top:10px">
+        ${lead.whatsapp ? `<a class="btn verde" target="_blank" href="${waLink(lead.whatsapp, "Olá " + lead.nome + "!")}">Atender pelo WhatsApp</a>` : ""}
+        <button class="pequeno vermelho" id="chatFechar">Fechar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+  const renderMsgs = () => {
+    const chat = document.getElementById("chatMsgs");
+    const msgs = lead.mensagens || [];
+    if (msgs.length === 0) { chat.innerHTML = '<div class="vazio">Sem conversas ainda. Escreva uma mensagem que o cliente mandou e veja a IA atendendo.</div>'; return; }
+    chat.innerHTML = msgs.map(m => `
+      <div class="msg ${m.de === "cliente" ? "cliente" : m.de === "dono" ? "dono" : "ia"}">
+        <div class="quem">${m.de === "cliente" ? esc(lead.nome) : m.de === "dono" ? "Dono" : "IA"}</div>${esc(m.texto)}
+        <div style="font-size:10px;opacity:.6;margin-top:4px">${m.data}</div>
+      </div>`).join("");
+    chat.scrollTop = chat.scrollHeight;
+  };
+  renderMsgs();
+  const enviar = async () => {
+    const texto = document.getElementById("chatTexto").value.trim();
+    if (!texto) return;
+    document.getElementById("chatResponder").disabled = true;
+    document.getElementById("chatMsg").innerHTML = '<div class="aviso">IA atendendo...</div>';
+    try {
+      const j = await api("/api/leads/" + lead.id + "/responder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto })
+      });
+      if (j.erro) { document.getElementById("chatMsg").innerHTML = `<div class="erro">${esc(j.erro)}</div>`; return; }
+      lead.mensagens = j.lead.mensagens;
+      document.getElementById("chatTexto").value = "";
+      document.getElementById("chatMsg").innerHTML = "";
+      renderMsgs();
+    } catch (e) {
+      document.getElementById("chatMsg").innerHTML = `<div class="erro">${esc(e.message)}</div>`;
+    } finally {
+      document.getElementById("chatResponder").disabled = false;
+    }
+  };
+  document.getElementById("chatResponder").addEventListener("click", enviar);
+  document.getElementById("chatTexto").addEventListener("keydown", e => { if (e.key === "Enter") enviar(); });
+  document.getElementById("chatFechar").addEventListener("click", () => fundo.remove());
+  fundo.addEventListener("click", e => { if (e.target === fundo) fundo.remove(); });
+}
+
+async function abrirRaiox(lead) {
+  const fundo = document.createElement("div");
+  fundo.className = "modal-fundo visivel";
+  fundo.innerHTML = `
+    <div class="modal">
+      <h3>Raio-X de ${esc(lead.nome)}</h3>
+      <div class="raiox-box" id="raioxBox">IA analisando o lead...</div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="pequeno vermelho" id="raioxFechar">Fechar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+  const box = document.getElementById("raioxBox");
+  try {
+    const j = await api("/api/leads/" + lead.id + "/raio-x", { method: "POST" });
+    if (j.erro) { box.innerHTML = `<span class="erro">${esc(j.erro)}</span>`; return; }
+    const r = j.raiox;
+    const nota = Math.round(Number(r.nota || 0));
+    box.innerHTML = `
+      <div>Intenção de compra: <b>${esc(r.intencao || "?")}</b> · Nota: <b>${nota}/10</b></div>
+      <div style="margin-top:6px">${esc(r.resumo || "")}</div>
+      <div style="margin-top:8px"><b>Próximo passo sugerido:</b> ${esc(r.proximoPasso || "")}</div>
+      <div style="margin-top:6px">Status sugerido pela IA: <b>${esc(statusNome[r.statusSugerido] || r.statusSugerido || "")}</b> (aplicado ao lead)</div>
+      <div style="margin-top:6px;opacity:.6;font-size:11px">Analisado em ${r.gerado}</div>`;
+    await renderLeads();
+  } catch (e) {
+    box.innerHTML = `<span class="erro">${esc(e.message)}</span>`;
+  }
+  document.getElementById("raioxFechar").addEventListener("click", () => fundo.remove());
+  fundo.addEventListener("click", e => { if (e.target === fundo) fundo.remove(); });
+}
+
+async function renderContratos() {
+  const j = await api("/api/contratos");
+  contratosCache = j.contratos;
+  const leads = leadsCache;
+  painel.innerHTML = `
+    <h2>Contratos</h2>
+    <h3>Novo contrato</h3>
+    <div class="grid-2">
+      <div>
+        <div class="campo" style="margin-bottom:10px"><label>Lead</label><select id="ctLead">
+          ${leads.map(l => `<option value="${l.id}">${esc(l.nome)}</option>`).join("")}
+        </select></div>
+        <div class="campo" style="margin-bottom:10px"><label>Título</label><input id="ctTitulo" placeholder="Ex: Contrato de consultoria"></div>
+        <div class="campo" style="margin-bottom:10px"><label>Valor (R$)</label><input id="ctValor" type="number" step="0.01" placeholder="2000"></div>
+      </div>
+      <div>
+        <div class="campo"><label>Corpo do contrato (pode usar {nome} do lead)</label>
+        <textarea id="ctCorpo" style="min-height:150px">CONTRATO DE PRESTAÇÃO DE SERVIÇOS
+
+Pelo presente instrumento, {nome} contrata a empresa ${esc(empresaCache?.nome || "Minha Empresa")} para prestação de serviços de consultoria em crédito empresarial.
+
+Cláusula 1: Objeto — assessoria completa para obtenção de crédito empresarial.
+Cláusula 2: Valor — R$ 2.000,00, pago via PIX.
+Cláusula 3: Prazo — 30 dias a partir da assinatura.
+Cláusula 4: Confidencialidade — as partes se comprometem a manter sigilo das informações trocadas.</textarea></div>
+      </div>
+    </div>
+    <button class="primario" id="btnCt" style="margin-top:12px">Criar contrato</button>
+    <div id="msgCt"></div>
+    <h3>Contratos criados</h3>
+    <div id="listaCt"></div>`;
+  document.getElementById("btnCt").addEventListener("click", async () => {
+    const r = await api("/api/contratos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leadId: document.getElementById("ctLead").value,
+        titulo: document.getElementById("ctTitulo").value,
+        valor: document.getElementById("ctValor").value,
+        corpo: document.getElementById("ctCorpo").value
+      })
+    });
+    if (r.erro) { document.getElementById("msgCt").innerHTML = `<div class="erro">${esc(r.erro)}</div>`; return; }
+    document.getElementById("msgCt").innerHTML = "";
+    await renderContratos();
+  });
+  renderListaContratos();
+}
+
+function renderListaContratos() {
+  const lista = document.getElementById("listaCt");
+  if (!lista) return;
+  if (contratosCache.length === 0) { lista.innerHTML = '<div class="vazio">Nenhum contrato ainda.</div>'; return; }
+  lista.innerHTML = contratosCache.map(c => `
+    <div class="lista-item">
+      <div>
+        <b>${esc(c.titulo)}</b> — ${esc(c.leadNome)}
+        <div style="font-size:12px;margin-top:3px">
+          ${c.valor !== null ? "<b>" + f(c.valor) + "</b> · " : ""}
+          ${c.status === "assinado" ? `<span class="status st-fechado">Assinado ${esc(c.assinado)}</span>` : `<span class="status st-novo">Enviado / aguardando</span>`}
+        </div>
+        <div style="font-size:11px;margin-top:4px;color:var(--texto)">Link de assinatura: <span class="brcode" style="display:inline;padding:2px 6px;background:#0D1728">http://multi-ph/contrato.html?id=${c.id}</span></div>
+      </div>
+      <div class="acoes">
+        <button class="pequeno" data-id="${c.id}" data-link="http://multi-ph/contrato.html?id=${c.id}">Copiar link</button>
+        <button class="pequeno verde" data-id="${c.id}" data-abrir="http://multi-ph/contrato.html?id=${c.id}">Abrir</button>
+        <button class="pequeno vermelho" data-id="${c.id}">Excluir</button>
+      </div>
+    </div>`).join("");
+  lista.querySelectorAll("button[data-link]").forEach(b => b.addEventListener("click", () => copiarTexto(b.dataset.link)));
+  lista.querySelectorAll("button[data-abrir]").forEach(b => b.addEventListener("click", () => window.open(b.dataset.abrir, "_blank")));
+  lista.querySelectorAll("button.vermelho").forEach(b => b.addEventListener("click", async () => {
+    if (!confirm("Excluir este contrato?")) return;
+    await api("/api/contratos?id=" + b.dataset.id, { method: "DELETE" });
+    await renderContratos();
+  }));
+}
+
+async function renderCobrancas() {
+  const j = await api("/api/cobrancas");
+  cobrancasCache = j.cobrancas;
+  const leads = leadsCache;
+  painel.innerHTML = `
+    <h2>Cobranças PIX</h2>
+    <p style="font-size:13px;margin-bottom:10px">Gere um código PIX para cobrar o lead. O pagamento cai direto na sua chave PIX (${esc(empresaCache?.pix_chave || "não configurada")}).</p>
+    <div class="form-linha">
+      <div class="campo"><label>Lead</label><select id="pxLead">
+        ${leads.map(l => `<option value="${l.id}">${esc(l.nome)}</option>`).join("")}
+      </select></div>
+      <div class="campo"><label>Descrição</label><input id="pxDesc" placeholder="Ex: Consultoria de crédito"></div>
+      <div class="campo"><label>Valor (R$)</label><input id="pxValor" type="number" step="0.01" placeholder="2000"></div>
+      <button class="primario" id="btnPx">Gerar cobrança</button>
+    </div>
+    <div id="msgPx"></div>
+    <div id="listaPx"></div>`;
+  document.getElementById("btnPx").addEventListener("click", async () => {
+    const r = await api("/api/cobrancas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leadId: document.getElementById("pxLead").value,
+        descricao: document.getElementById("pxDesc").value,
+        valor: document.getElementById("pxValor").value
+      })
+    });
+    if (r.erro) { document.getElementById("msgPx").innerHTML = `<div class="erro">${esc(r.erro)}</div>`; return; }
+    document.getElementById("pxDesc").value = "";
+    document.getElementById("pxValor").value = "";
+    document.getElementById("msgPx").innerHTML = "";
+    await renderCobrancas();
+    carregarTudo();
+  });
+  renderListaCobrancas();
+}
+
+function renderListaCobrancas() {
+  const lista = document.getElementById("listaPx");
+  if (!lista) return;
+  if (cobrancasCache.length === 0) { lista.innerHTML = '<div class="vazio">Nenhuma cobrança ainda.</div>'; return; }
+  lista.innerHTML = cobrancasCache.map(c => `
+    <div class="lista-item" style="align-items:flex-start">
+      <div style="flex:1">
+        <b>${esc(c.descricao)}</b> — ${esc(c.leadNome)} · <b>${f(c.valor)}</b>
+        <div style="margin-top:4px">
+          ${c.pago
+            ? `<span class="status st-fechado">Pago em ${esc(c.pagoEm)}</span>`
+            : `<span class="status st-negociando">Aguardando pagamento</span>`}
+        </div>
+        <div class="brcode">${esc(c.brcode)}</div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          ${!c.pago ? `<button class="pequeno verde" data-pagar="${c.id}">Marcar como pago</button>` : ""}
+          <button class="pequeno" data-copiar="${c.brcode}">Copiar código</button>
+          <button class="pequeno vermelho" data-excluir="${c.id}">Excluir</button>
+        </div>
+      </div>
+      <div class="qr"><img src="${qrUrl(c.brcode)}" alt="QR code PIX"></div>
+    </div>`).join("");
+  lista.querySelectorAll("[data-pagar]").forEach(b => b.addEventListener("click", async () => {
+    await api("/api/cobrancas/" + b.dataset.pagar + "/pagar", { method: "POST" });
+    await renderCobrancas();
+    carregarTudo();
+  }));
+  lista.querySelectorAll("[data-copiar]").forEach(b => b.addEventListener("click", () => copiarTexto(b.dataset.copiar)));
+  lista.querySelectorAll("[data-excluir]").forEach(b => b.addEventListener("click", async () => {
+    if (!confirm("Excluir esta cobrança?")) return;
+    await api("/api/cobrancas?id=" + b.dataset.excluir, { method: "DELETE" });
+    await renderCobrancas();
+    carregarTudo();
+  }));
+}
+
+async function renderConhecimento() {
+  const j = await api("/api/empresa");
+  conhecimentoCache = j.conhecimento || [];
+  painel.innerHTML = `
+    <h2>Base de conhecimento</h2>
+    <p style="font-size:13px;margin-bottom:10px">Aqui fica tudo que sua empresa sabe: produtos, preços, prazos, políticas. A IA do atendimento usa SOMENTE isto para responder sobre a empresa.</p>
+    <div class="campo" style="margin-bottom:10px"><label>Título</label><input id="cnTitulo" placeholder="Ex: Preço da consultoria"></div>
+    <div class="campo" style="margin-bottom:10px"><label>Conteúdo</label>
+      <textarea id="cnTexto" placeholder="Ex: A consultoria completa custa R$ 2.000, paga via PIX, inclui mapeamento da operação e acompanhamento por 30 dias."></textarea>
+    </div>
+    <button class="primario" id="btnCn">Adicionar à base</button>
+    <div id="msgCn"></div>
+    <h3>Itens da base (${conhecimentoCache.length})</h3>
+    <div id="listaCn"></div>`;
+  document.getElementById("btnCn").addEventListener("click", async () => {
+    const r = await api("/api/conhecimento", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        titulo: document.getElementById("cnTitulo").value,
+        texto: document.getElementById("cnTexto").value
+      })
+    });
+    if (r.erro) { document.getElementById("msgCn").innerHTML = `<div class="erro">${esc(r.erro)}</div>`; return; }
+    document.getElementById("cnTitulo").value = "";
+    document.getElementById("cnTexto").value = "";
+    document.getElementById("msgCn").innerHTML = "";
+    await renderConhecimento();
+  });
+  renderListaConhecimento();
+}
+
+function renderListaConhecimento() {
+  const lista = document.getElementById("listaCn");
+  if (!lista) return;
+  if (conhecimentoCache.length === 0) { lista.innerHTML = '<div class="vazio">Base vazia. Adicione produtos, preços e políticas para a IA atender com precisão.</div>'; return; }
+  lista.innerHTML = conhecimentoCache.map(k => `
+    <div class="lista-item">
+      <div><b>${esc(k.titulo)}</b><div style="font-size:12px;margin-top:3px;max-width:520px">${esc(k.texto)}</div>
+      <div style="font-size:11px;opacity:.6;margin-top:3px">Adicionado em ${k.data}</div></div>
+      <button class="pequeno vermelho" data-del="${k.id}">Remover</button>
+    </div>`).join("");
+  lista.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+    await api("/api/conhecimento?id=" + b.dataset.del, { method: "DELETE" });
+    await renderConhecimento();
+  }));
+}
+
+function renderConfig() {
+  const e = empresaCache || {};
+  painel.innerHTML = `
+    <h2>Configurações da empresa</h2>
+    <div class="grid-2">
+      <div>
+        <div class="campo" style="margin-bottom:12px"><label>Nome da empresa</label><input id="cfgNome" value="${esc(e.nome || "")}"></div>
+        <div class="campo" style="margin-bottom:12px"><label>WhatsApp do dono (para transbordo, só números)</label><input id="cfgWhats" value="${esc(e.whatsapp || "")}" placeholder="5511999999999"></div>
+        <div class="campo" style="margin-bottom:12px"><label>Chave PIX (aleatória, e-mail, CPF ou telefone)</label><input id="cfgPix" value="${esc(e.pix_chave || "")}"></div>
+        <div class="campo" style="margin-bottom:12px"><label>Nome no PIX (até 25 letras)</label><input id="cfgPixNome" value="${esc(e.pix_nome || "")}"></div>
+        <div class="campo"><label>Cidade (até 15 letras)</label><input id="cfgPixCidade" value="${esc(e.pix_cidade || "")}"></div>
+      </div>
+      <div>
+        <div class="campo" style="margin-bottom:12px"><label>Regras de atendimento (a IA segue estas regras)</label>
+          <textarea id="cfgRegras" style="min-height:110px">${esc(e.regras || "")}</textarea>
+        </div>
+        <div class="campo" style="margin-bottom:12px"><label>Mensagem de privacidade (LGPD)</label>
+          <textarea id="cfgLgpd" style="min-height:70px">${esc(e.lgpd_msg || "")}</textarea>
+        </div>
+        <div class="aviso" id="msgCfg"></div>
+        <button class="primario" id="btnCfg">Salvar configurações</button>
+      </div>
+    </div>`;
+  document.getElementById("btnCfg").addEventListener("click", async () => {
+    const r = await api("/api/empresa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: document.getElementById("cfgNome").value,
+        whatsapp: document.getElementById("cfgWhats").value,
+        pix_chave: document.getElementById("cfgPix").value,
+        pix_nome: document.getElementById("cfgPixNome").value,
+        pix_cidade: document.getElementById("cfgPixCidade").value,
+        regras: document.getElementById("cfgRegras").value,
+        lgpd_msg: document.getElementById("cfgLgpd").value
+      })
+    });
+    if (r.empresa) empresaCache = r.empresa;
+    document.getElementById("msgCfg").innerHTML = "Configurações salvas.";
+    carregarTudo();
+  });
+}
+
+const renderes = { visao: renderVisao, leads: renderLeads, contratos: renderContratos, cobrancas: renderCobrancas, conhecimento: renderConhecimento, config: renderConfig };
+
+document.querySelectorAll("#abasTopo button").forEach(b => b.addEventListener("click", async () => {
+  document.querySelectorAll("#abasTopo button").forEach(x => x.classList.remove("ativa"));
+  b.classList.add("ativa");
+  painel.innerHTML = '<div class="vazio">Carregando...</div>';
+  if (b.dataset.aba === "leads" && leadsCache.length === 0) await carregarLeadsSilencioso();
+  await renderes[b.dataset.aba]();
+}));
+
+async function carregarLeadsSilencioso() {
+  const j = await api("/api/leads");
+  leadsCache = j.leads;
+}
+
+carregarTudo();
+renderes.visao();
+</script>
+</body>
+</html>
