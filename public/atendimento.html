@@ -175,7 +175,7 @@ function adicionarMsg(de, texto) {
   document.getElementById("msgs").scrollTop = document.getElementById("msgs").scrollHeight;
 }
 
-fetch("/api/empresa").then(j => {
+fetch("/api/empresa/publica").then(j => {
   empresaCache.nome = j.nome || "Empresa";
   empresaCache.lgpd_msg = j.lgpd_msg || "Autorizo o uso dos meus dados para este atendimento (LGPD). Posso pedir a exclusão a qualquer momento.";
   empresaCache.whatsapp = j.whatsapp || "";

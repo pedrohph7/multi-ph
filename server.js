@@ -23,6 +23,19 @@ const config = Object.assign(
   }
 );
 
+const SENHA = process.env.SENHA || config.senha || "";
+
+function autenticado(req) {
+  return SENHA && req.headers["x-senha"] === SENHA;
+}
+
+function precisaAuth(req, res) {
+  if (autenticado(req)) return true;
+  res.writeHead(401, { "Content-Type": "application/json; charset=utf-8" });
+  res.end(JSON.stringify({ erro: "Não autenticado." }));
+  return false;
+}
+
 [DIR_EMPRESA, DADOS].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
 
 const INSTRUCAO_SISTEMA = `Você é o Multi PH, um assistente de inteligência artificial para consultores de crédito empresarial brasileiros.
@@ -519,7 +532,18 @@ function lerCorpo(req) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    if (req.method === "POST" && req.url === "/api/login") {
+      const corpo = JSON.parse((await lerCorpo(req)) || "{}");
+      if (corpo.senha === SENHA) {
+        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+        return res.end(JSON.stringify({ ok: true }));
+      }
+      res.writeHead(401, { "Content-Type": "application/json; charset=utf-8" });
+      return res.end(JSON.stringify({ erro: "Senha incorreta." }));
+    }
+
     if (req.method === "POST" && req.url === "/api/perguntar") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const pergunta = String(corpo.pergunta || "").trim();
       if (!pergunta) {
@@ -546,6 +570,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && req.url === "/api/resumir") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const pergunta = String(corpo.pergunta || "").trim();
       const respostas = Array.isArray(corpo.respostas) ? corpo.respostas : [];
@@ -555,6 +580,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && req.url.startsWith("/api/diario")) {
+      if (!precisaAuth(req, res)) return;
       const lista = fs.existsSync(DADOS) ? fs.readdirSync(DADOS).filter(f => f.endsWith(".json")).sort().reverse() : [];
       const dados = lista.map(f => {
         try { return JSON.parse(fs.readFileSync(path.join(DADOS, f), "utf8")); } catch (e) { return null; }
@@ -564,6 +590,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && req.url === "/api/slides") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const tema = String(corpo.tema || "").trim();
       if (!tema) {
@@ -594,6 +621,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "POST" && req.url === "/api/diario/agora") {
+      if (!precisaAuth(req, res)) return;
       if (provedores.length === 0) {
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
         return res.end(JSON.stringify({ aviso: "Nenhuma IA configurada ainda." }));
@@ -611,6 +639,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     // ================= MODO EMPRESA (estilo Babel OS) =================
 
     if (req.method === "GET" && req.url === "/api/visao") {
+      if (!precisaAuth(req, res)) return;
       const leads = lerLeads();
       const contratos = lerContratos();
       const cobrancas = lerCobrancas();
@@ -629,12 +658,20 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
       }));
     }
 
+    if (req.method === "GET" && req.url === "/api/empresa/publica") {
+      const e = lerEmpresa();
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      return res.end(JSON.stringify({ nome: e.nome, whatsapp: e.whatsapp, lgpd_msg: e.lgpd_msg }));
+    }
+
     if (req.method === "GET" && req.url === "/api/empresa") {
+      if (!precisaAuth(req, res)) return;
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
       return res.end(JSON.stringify(lerEmpresa()));
     }
 
     if (req.method === "POST" && req.url === "/api/empresa") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const atual = lerEmpresa();
       const novo = {
@@ -652,6 +689,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "POST" && req.url === "/api/conhecimento") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const titulo = limparTexto(corpo.titulo) || "Item sem título";
       const texto = limparTexto(corpo.texto);
@@ -667,6 +705,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "DELETE" && req.url.startsWith("/api/conhecimento")) {
+      if (!precisaAuth(req, res)) return;
       const id = new URL(req.url, "http://localhost").searchParams.get("id");
       let lista = lerJSON(ARQ_CONHECIMENTO, []);
       lista = lista.filter(k => k.id !== id);
@@ -676,12 +715,14 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "GET" && req.url === "/api/leads") {
+      if (!precisaAuth(req, res)) return;
       const leads = lerLeads().sort((a, b) => String(b.ultimoContato || b.criado).localeCompare(String(a.ultimoContato || a.criado)));
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
       return res.end(JSON.stringify({ leads }));
     }
 
     if (req.method === "POST" && req.url === "/api/leads") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const nome = limparTexto(corpo.nome);
       if (!nome) {
@@ -710,6 +751,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "PUT" && req.url === "/api/leads") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const leads = lerLeads();
       const lead = leads.find(l => l.id === corpo.id);
@@ -728,6 +770,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "DELETE" && req.url.startsWith("/api/leads")) {
+      if (!precisaAuth(req, res)) return;
       const id = new URL(req.url, "http://localhost").searchParams.get("id");
       let leads = lerLeads();
       const restantes = leads.filter(l => l.id !== id);
@@ -741,6 +784,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "GET" && req.url === "/api/leads/parados") {
+      if (!precisaAuth(req, res)) return;
       const leads = lerLeads();
       const parados = leads.filter(l => l.status !== "fechado" && l.status !== "perdido")
         .map(l => {
@@ -754,6 +798,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "GET" && req.url.startsWith("/api/leads/") && req.url.endsWith("/conversa")) {
+      if (!precisaAuth(req, res)) return;
       const id = req.url.split("/")[3];
       const leads = lerLeads();
       const lead = leads.find(l => l.id === id);
@@ -766,6 +811,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "POST" && req.url.startsWith("/api/leads/") && req.url.endsWith("/responder")) {
+      if (!precisaAuth(req, res)) return;
       const id = req.url.split("/")[3];
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       try {
@@ -779,6 +825,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "POST" && req.url.startsWith("/api/leads/") && req.url.endsWith("/raio-x")) {
+      if (!precisaAuth(req, res)) return;
       const id = req.url.split("/")[3];
       const leads = lerLeads();
       const lead = leads.find(l => l.id === id);
@@ -853,6 +900,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "GET" && req.url === "/api/contratos") {
+      if (!precisaAuth(req, res)) return;
       const leads = lerLeads();
       const contratos = lerContratos().sort((a, b) => String(b.criado).localeCompare(String(a.criado)));
       const comNome = contratos.map(c => ({ ...c, leadNome: leads.find(l => l.id === c.leadId)?.nome || "Lead removido" }));
@@ -861,6 +909,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "POST" && req.url === "/api/contratos") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const titulo = limparTexto(corpo.titulo) || "Contrato";
       const corpoTexto = String(corpo.corpo || "").trim();
@@ -924,6 +973,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "DELETE" && req.url.startsWith("/api/contratos")) {
+      if (!precisaAuth(req, res)) return;
       const id = new URL(req.url, "http://localhost").searchParams.get("id");
       let contratos = lerContratos();
       contratos = contratos.filter(c => c.id !== id);
@@ -933,6 +983,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "GET" && req.url === "/api/cobrancas") {
+      if (!precisaAuth(req, res)) return;
       const leads = lerLeads();
       const cobrancas = lerCobrancas().sort((a, b) => String(b.criado).localeCompare(String(a.criado)));
       const comNome = cobrancas.map(c => ({ ...c, leadNome: leads.find(l => l.id === c.leadId)?.nome || "Lead removido" }));
@@ -941,6 +992,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "POST" && req.url === "/api/cobrancas") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const valor = Number(corpo.valor);
       if (!corpo.leadId || !(valor > 0)) {
@@ -977,6 +1029,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "POST" && req.url.startsWith("/api/cobrancas/") && req.url.endsWith("/pagar")) {
+      if (!precisaAuth(req, res)) return;
       const id = req.url.split("/")[3];
       const cobrancas = lerCobrancas();
       const cobranca = cobrancas.find(c => c.id === id);
@@ -992,6 +1045,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "DELETE" && req.url.startsWith("/api/cobrancas")) {
+      if (!precisaAuth(req, res)) return;
       const id = new URL(req.url, "http://localhost").searchParams.get("id");
       let cobrancas = lerCobrancas();
       cobrancas = cobrancas.filter(c => c.id !== id);
@@ -1001,11 +1055,13 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "GET" && req.url === "/api/financeiro") {
+      if (!precisaAuth(req, res)) return;
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
       return res.end(JSON.stringify(calcularResumoFinanceiro()));
     }
 
     if (req.method === "POST" && req.url === "/api/financeiro/lancar") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       if (!["entrada", "saida"].includes(corpo.tipo) || !(Number(corpo.valor) > 0)) {
         res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
@@ -1027,6 +1083,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "DELETE" && req.url.startsWith("/api/financeiro")) {
+      if (!precisaAuth(req, res)) return;
       const id = new URL(req.url, "http://localhost").searchParams.get("id");
       let lista = lerFinanceiro();
       lista = lista.filter(l => l.id !== id);
@@ -1036,6 +1093,7 @@ Regras: de 6 a 10 slides, cada um com 3 a 5 pontos curtos e diretos. O primeiro 
     }
 
     if (req.method === "POST" && req.url === "/api/ceo") {
+      if (!precisaAuth(req, res)) return;
       const corpo = JSON.parse((await lerCorpo(req)) || "{}");
       const pergunta = String(corpo.pergunta || "").trim();
       if (!pergunta) {
